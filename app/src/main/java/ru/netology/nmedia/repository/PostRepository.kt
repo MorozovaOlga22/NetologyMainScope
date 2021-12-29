@@ -7,6 +7,7 @@ interface PostRepository {
     val data: LiveData<List<Post>>
     suspend fun getAll()
     suspend fun save(post: Post)
+    suspend fun saveError(post: Post)
     suspend fun removeById(id: Long)
     suspend fun likeById(id: Long)
 }
