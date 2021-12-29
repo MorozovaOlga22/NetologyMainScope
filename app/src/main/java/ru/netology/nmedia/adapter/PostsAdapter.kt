@@ -1,6 +1,7 @@
 package ru.netology.nmedia.adapter
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import androidx.recyclerview.widget.DiffUtil
@@ -13,6 +14,7 @@ import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.view.loadCircleCrop
 
 interface OnInteractionListener {
+    fun onSaveAgain(post: Post)
     fun onLike(post: Post) {}
     fun onEdit(post: Post) {}
     fun onRemove(post: Post) {}
@@ -46,10 +48,18 @@ class PostViewHolder(
             avatar.loadCircleCrop("${BuildConfig.BASE_URL}/avatars/${post.authorAvatar}")
             like.isChecked = post.likedByMe
             like.text = "${post.likes}"
+            like.visibility = if (post.id < 0L) View.GONE else View.VISIBLE
+            share.visibility = if (post.id < 0L) View.GONE else View.VISIBLE
+            waitingSaving.visibility = if (post.id < 0L) View.VISIBLE else View.GONE
+            saveAgain.visibility = if (post.hasSaveErrors) View.VISIBLE else View.GONE
 
             menu.setOnClickListener {
                 PopupMenu(it.context, it).apply {
-                    inflate(R.menu.options_post)
+                    if (post.id < 0L) {
+                        inflate(R.menu.options_new_post)
+                    } else {
+                        inflate(R.menu.options_post)
+                    }
                     setOnMenuItemClickListener { item ->
                         when (item.itemId) {
                             R.id.remove -> {
@@ -65,6 +75,10 @@ class PostViewHolder(
                         }
                     }
                 }.show()
+            }
+
+            saveAgain.setOnClickListener {
+                onInteractionListener.onSaveAgain(post)
             }
 
             like.setOnClickListener {

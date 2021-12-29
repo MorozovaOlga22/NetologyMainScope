@@ -11,7 +11,6 @@ import ru.netology.nmedia.entity.toEntity
 import ru.netology.nmedia.error.ApiError
 import ru.netology.nmedia.error.NetworkError
 import ru.netology.nmedia.error.UnknownError
-import java.lang.RuntimeException
 
 class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
     override val data = dao.getAll().map(List<PostEntity>::toDto)
@@ -34,11 +33,14 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
 
     override suspend fun save(post: Post) {
         try {
-            val response = PostsApi.service.save(post)
+            dao.insert(PostEntity.fromDto(post))
+
+            val response = PostsApi.service.save(post.copy(id = 0L))
             if (!response.isSuccessful) {
                 throw ApiError(response.code(), response.message())
             }
 
+            dao.removeById(post.id)
             val body = response.body() ?: throw ApiError(response.code(), response.message())
             dao.insert(PostEntity.fromDto(body))
         } catch (e: IOException) {
@@ -48,13 +50,23 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
         }
     }
 
+    override suspend fun saveError(post: Post) {
+        try {
+            dao.insert(PostEntity.fromDto(post.copy(hasSaveErrors = true)))
+        } catch (e: Exception) {
+            throw UnknownError
+        }
+    }
+
     override suspend fun removeById(id: Long) {
         try {
             dao.removeById(id)
 
-            val response = PostsApi.service.removeById(id)
-            if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
+            if (id >= 0L) {
+                val response = PostsApi.service.removeById(id)
+                if (!response.isSuccessful) {
+                    throw ApiError(response.code(), response.message())
+                }
             }
         } catch (e: IOException) {
             throw NetworkError
@@ -90,8 +102,7 @@ class PostRepositoryImpl(private val dao: PostDao) : PostRepository {
 
     private fun getPostById(id: Long): Post {
         val posts = data.value ?: throw RuntimeException("Posts value is empty")
-        val post = posts.find { post -> post.id == id }
+        return posts.find { post -> post.id == id }
             ?: throw RuntimeException("Post with id $id not found")
-        return post
     }
 }

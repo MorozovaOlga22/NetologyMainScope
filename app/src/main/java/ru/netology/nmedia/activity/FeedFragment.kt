@@ -29,6 +29,10 @@ class FeedFragment : Fragment() {
         val binding = FragmentFeedBinding.inflate(inflater, container, false)
 
         val adapter = PostsAdapter(object : OnInteractionListener {
+            override fun onSaveAgain(post: Post) {
+                viewModel.saveAgain(post)
+            }
+
             override fun onEdit(post: Post) {
                 viewModel.edit(post)
             }

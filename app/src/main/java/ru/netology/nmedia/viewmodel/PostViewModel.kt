@@ -10,6 +10,7 @@ import ru.netology.nmedia.model.FeedModelState
 import ru.netology.nmedia.repository.PostRepository
 import ru.netology.nmedia.repository.PostRepositoryImpl
 import ru.netology.nmedia.util.SingleLiveEvent
+import kotlin.random.Random
 
 private val empty = Post(
     id = 0,
@@ -64,15 +65,30 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         edited.value?.let {
             _postCreated.value = Unit
             viewModelScope.launch {
+                val tempId = Random.nextLong(-Long.MAX_VALUE, 0L)
+                val postWithCorrectId = if (it.id == 0L) it.copy(id = tempId) else it
                 try {
-                    repository.save(it)
+                    repository.save(postWithCorrectId)
                     _dataState.value = FeedModelState()
                 } catch (e: Exception) {
+                    repository.saveError(postWithCorrectId)
                     _dataState.value = FeedModelState(error = true)
                 }
             }
         }
         edited.value = empty
+    }
+
+    fun saveAgain(post: Post) {
+        viewModelScope.launch {
+            try {
+                repository.save(post.copy(hasSaveErrors = false))
+                _dataState.value = FeedModelState()
+            } catch (e: Exception) {
+                repository.saveError(post)
+                _dataState.value = FeedModelState(error = true)
+            }
+        }
     }
 
     fun edit(post: Post) {

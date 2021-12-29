@@ -4,6 +4,8 @@
     <string name="description_post_author_avatar">Post author avatar</string>
     <string name="description_post_menu">Post menu</string>
     <string name="description_post_like">Like</string>
+    <string name="description_preservation_expected">Preservation expected</string>
+    <string name="description_post_save_again">Try to save again</string>
     <string name="description_post_share">Share</string>
     <string name="description_post_save">Save</string>
     <string name="menu_remove">Remove</string>
